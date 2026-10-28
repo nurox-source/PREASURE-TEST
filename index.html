@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUROX'S CUSTOM CYBERNETIC</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        display: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            bg: '#050811',
+                            card: 'rgba(12, 19, 36, 0.7)',
+                            border: 'rgba(56, 189, 248, 0.2)',
+                            primary: '#00f0ff',
+                            secondary: '#7000ff',
+                            pink: '#ff007f',
+                            gold: '#ffd700'
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'float': 'float 6s ease-in-out infinite',
+                        'scanline': 'scanline 8s linear infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(0,240,255,0.2)' },
+                            '100%': { boxShadow: '0 0 35px rgba(112,0,255,0.6)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS Styles -->
+    <style>
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .glass-panel {
+            background: rgba(10, 16, 31, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+        }
+
+        .scanline-overlay {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+    </style>
+</head>
+
+<body class="h-full flex flex-col font-sans antialiased relative">
+    
+    <!-- Background Canvas -->
+    <canvas id="cyberCanvas" class="fixed inset-0 z-0 pointer-events-auto"></canvas>
+    
+    <!-- CRT Overlay Effect -->
+    <div class="fixed inset-0 pointer-events-none z-10 scanline-overlay opacity-30"></div>
+
+    <!-- Main Container Layout -->
+    <div class="relative z-20 flex flex-col min-h-screen">
+        
+        <!-- Navigation Header -->
+        <header class="w-full glass-panel sticky top-0 z-30 px-4 lg:px-8 py-3 flex items-center justify-between border-b border-cyber-border">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyber-secondary to-cyber-primary p-0.5 flex items-center justify-center animate-pulse">
+                    <div class="w-full h-full bg-cyber-bg rounded-[7px] flex items-center justify-center">
+                        <i data-lucide="atom" class="w-6 h-6 text-cyber-primary"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="logo">NUROX-X <span style="font-size: 1rem; color: #888;">(Made by Ashraf)</span></h1> 
+                </div>
+            </div>
+
+            <!-- Header Controls & Status -->
+            <div class="flex items-center space-x-3 md:space-x-6">
+                <!-- Status Badge -->
+                <div class="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>QUANTUM CORE: ONLINE</span>
+                </div>
+
+                <!-- Audio Synth Toggle -->
+                <button id="audioToggleBtn" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg glass-panel hover:bg-cyber-primary/10 text-xs font-mono text-cyber-primary transition-all duration-300">
+                    <i data-lucide="volume-x" id="audioIcon" class="w-4 h-4"></i>
+                    <span id="audioStatusText" class="hidden md:inline">AUDIO DRONE: OFF</span>
+                </button>
+
+                <!-- Action Button -->
+                <button id="resetCanvasBtn" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-cyber-primary to-cyber-secondary text-black font-display font-bold text-xs hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                    BURST MATRIX
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Holographic Control Deck -->
+            <div class="lg:col-span-4 flex flex-col space-y-6">
+                
+                <!-- Controller Module -->
+                <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-cyber-primary/10 rounded-full blur-2xl group-hover:bg-cyber-primary/20 transition-all"></div>
+                    
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
+                        <h2 class="font-display font-bold text-sm tracking-wide text-gray-200 flex items-center gap-2">
+                            <i data-lucide="sliders" class="w-4 h-4 text-cyber-primary"></i>
+                            MATRIX MATRIX PARAMETERS
+                        </h2>
+                        <span class="text-[10px] font-mono text-cyber-primary bg-cyber-primary/10 px-2 py-0.5 rounded">REALTIME</span>
+                    </div>
+
+                    <!-- Sliders Stack -->
+                    <div class="space-y-5 text-xs font-mono">
+                        <!-- Density Slider -->
+                        <div>
+                            <div class="flex justify-between text-gray-400 mb-1">
+                                <span>PARTICLE DENSITY</span>
+                                <span id="densityVal" class="text-cyber-primary">120</span>
+                            </div>
+                            <input type="range" id="densitySlider" min="30" max="250" value="120" class="w-full accent-cyber-primary bg-gray-800 rounded-lg cursor-pointer h-1.5">
+                        </div>
+
+                        <!-- Speed Slider -->
+                        <div>
+                            <div class="flex justify-between text-gray-400 mb-1">
+                                <span>WARP VELOCITY</span>
+                                <span id="speedVal" class="text-cyber-primary">1.5x</span>
+                            </div>
+                            <input type="range" id="speedSlider" min="0.2" max="4.0" step="0.1" value="1.5" class="w-full accent-cyber-primary bg-gray-800 rounded-lg cursor-pointer h-1.5">
+                        </div>
+
+                        <!-- Link Distance -->
+                        <div>
+                            <div class="flex justify-between text-gray-400 mb-1">
+                                <span>SYNAPSE LINK DISTANCE</span>
+                                <span id="distanceVal" class="text-cyber-primary">140px</span>
+                            </div>
+                            <input type="range" id="distanceSlider" min="60" max="250" value="140" class="w-full accent-cyber-primary bg-gray-800 rounded-lg cursor-pointer h-1.5">
+                        </div>
+                    </div>
+
+                    <!-- Color Theme Picker -->
+                    <div class="mt-6 pt-4 border-t border-gray-800">
+                        <label class="text-[11px] font-mono text-gray-400 block mb-2">SPECTRUM THEMES</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button data-theme="cyber" class="theme-btn py-2 rounded-lg bg-cyan-950/60 border border-cyan-500/50 text-[10px] font-mono text-cyan-400 hover:bg-cyan-500/20 active">CYBER</button>
+                            <button data-theme="void" class="theme-btn py-2 rounded-lg bg-purple-950/60 border border-purple-500/50 text-[10px] font-mono text-purple-400 hover:bg-purple-500/20">VOID</button>
+                            <button data-theme="gold" class="theme-btn py-2 rounded-lg bg-amber-950/60 border border-amber-500/50 text-[10px] font-mono text-amber-400 hover:bg-amber-500/20">SOLAR</button>
+                            <button data-theme="matrix" class="theme-btn py-2 rounded-lg bg-emerald-950/60 border border-emerald-500/50 text-[10px] font-mono text-emerald-400 hover:bg-emerald-500/20">MATRIX</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telemetry & Stats -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
+                        <h2 class="font-display font-bold text-sm tracking-wide text-gray-200 flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4 text-cyber-pink"></i>
+                            SYSTEM TELEMETRY
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                            <span class="text-[10px] font-mono text-gray-500 block">FPS RATE</span>
+                            <span id="fpsCounter" class="text-xl font-mono font-bold text-cyber-primary">60.0</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                            <span class="text-[10px] font-mono text-gray-500 block">ACTIVE SYNAPSES</span>
+                            <span id="synapseCounter" class="text-xl font-mono font-bold text-cyber-pink">0</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                            <span class="text-[10px] font-mono text-gray-500 block">ENTANGLEMENT</span>
+                            <span class="text-xl font-mono font-bold text-cyber-gold">99.4%</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                            <span class="text-[10px] font-mono text-gray-500 block">AUDIO FREQ</span>
+                            <span id="freqVal" class="text-xl font-mono font-bold text-emerald-400">432Hz</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Interactive Modules & Lab Terminal -->
+            <div class="lg:col-span-8 flex flex-col space-y-6">
+                
+                <!-- Hero Hologram Banner -->
+                <div class="glass-panel rounded-2xl p-6 sm:p-8 relative overflow-hidden border border-cyber-primary/30 shadow-[0_0_50px_rgba(0,240,255,0.1)]">
+                    <div class="max-w-xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyber-primary/10 border border-cyber-primary/30 text-cyber-primary text-xs font-mono mb-4">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                            <span>EXPERIMENTAL CONSCIOUSNESS CANVAS</span>
+                        </div>
+                        <h2 class="font-display text-2xl sm:text-4xl font-black text-white leading-tight mb-3">
+                            EXPLORE THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-primary via-cyber-secondary to-cyber-pink">QUANTUM SYNAPSE</span> MATRIX
+                        </h2>
+                        <p class="text-gray-400 text-xs sm:text-sm leading-relaxed mb-6 font-sans">
+                            Touch or hover over the canvas to interact with neural particles. Toggle audio frequencies to synthesize ambient sound waves directly generated via the Web Audio API.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-3">
+                            <button id="triggerModalBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyber-primary to-blue-600 text-black font-display font-bold text-xs hover:shadow-[0_0_20px_rgba(0,240,255,0.5)] transition-all flex items-center gap-2">
+                                <i data-lucide="terminal" class="w-4 h-4"></i>
+                                LAUNCH EXPERIMENTAL LOGS
+                            </button>
+                            <button id="pulseEffectBtn" class="px-5 py-2.5 rounded-xl glass-panel hover:bg-cyber-secondary/20 text-white font-mono text-xs border border-cyber-secondary/50 transition-all flex items-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4 text-cyber-gold"></i>
+                                EMIT QUANTUM PULSE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Experimental Modules Tabs Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Module 1: Web Audio Synth -->
+                    <div class="glass-panel rounded-2xl p-6 relative flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-cyber-secondary/20 border border-cyber-secondary/40 flex items-center justify-center">
+                                    <i data-lucide="radio" class="w-4 h-4 text-cyber-secondary"></i>
+                                </div>
+                                <span class="text-[10px] font-mono text-gray-500">MODULE // 01</span>
+                            </div>
+                            <h3 class="font-display font-bold text-sm text-gray-100 mb-1">Harmonic Frequency Generator</h3>
+                            <p class="text-xs text-gray-400 mb-4">Synthesizes ambient drone harmonics using pure mathematical sine oscillators.</p>
+                        </div>
+
+                        <!-- Audio Pad Controls -->
+                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/80">
+                            <button data-freq="216" class="freq-btn py-2 rounded-lg bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-300 hover:border-cyber-primary hover:text-cyber-primary transition-all">216 Hz</button>
+                            <button data-freq="432" class="freq-btn py-2 rounded-lg bg-cyber-primary/10 border border-cyber-primary/40 text-[10px] font-mono text-cyber-primary font-bold">432 Hz</button>
+                            <button data-freq="528" class="freq-btn py-2 rounded-lg bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-300 hover:border-cyber-primary hover:text-cyber-primary transition-all">528 Hz</button>
+                        </div>
+                    </div>
+
+                    <!-- Module 2: Particle Force Field -->
+                    <div class="glass-panel rounded-2xl p-6 relative flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-cyber-pink/20 border border-cyber-pink/40 flex items-center justify-center">
+                                    <i data-lucide="magnet" class="w-4 h-4 text-cyber-pink"></i>
+                                </div>
+                                <span class="text-[10px] font-mono text-gray-500">MODULE // 02</span>
+                            </div>
+                            <h3 class="font-display font-bold text-sm text-gray-100 mb-1">Quantum Force Field</h3>
+                            <p class="text-xs text-gray-400 mb-4">Switch mouse interaction physics between gravitational attraction and electromagnetic repulsion.</p>
+                        </div>
+
+                        <!-- Physics Toggle -->
+                        <div class="flex items-center gap-2 pt-2 border-t border-gray-800/80">
+                            <button id="attractModeBtn" class="flex-1 py-2 rounded-lg bg-cyber-primary/20 border border-cyber-primary/50 text-[10px] font-mono text-cyber-primary font-bold transition-all">ATTRACT</button>
+                            <button id="repelModeBtn" class="flex-1 py-2 rounded-lg bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-400 hover:border-cyber-pink hover:text-cyber-pink transition-all">REPEL</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Lab Terminal Logs -->
+                <div class="glass-panel rounded-2xl p-6 font-mono text-xs">
+                    <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                            <span class="text-gray-500 text-[10px] ml-2">nurox-terminal@aether-x:~</span>
+                        </div>
+                        <button id="clearLogsBtn" class="text-gray-500 hover:text-gray-300 text-[10px]">CLEAR</button>
+                    </div>
+                    
+                    <div id="terminalLog" class="h-28 overflow-y-auto space-y-1.5 text-gray-400 pr-2">
+                        <p class="text-emerald-400">[SYSTEM]: NUROX-X Neural Kernel loaded successfully.</p>
+                        <p class="text-cyber-primary">[CANVAS]: 120 particle synapses initialized with vector math engine.</p>
+                        <p class="text-gray-500">[AUDIO]: Web Audio API Context ready. Click AUDIO DRONE to activate drone synthesis.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass-panel mt-auto border-t border-cyber-border py-4 px-4 text-center text-xs font-mono text-gray-500">
+            <p>Designed for GitHub Pages // <span class="text-cyber-primary">NUROX-X Laboratory</span> &copy; 2026</p>
+        </footer>
+
+    </div>
+
+    <!-- Experimental Log Modal Dialog -->
+    <div id="labModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-cyber-primary/40 shadow-[0_0_50px_rgba(0,240,255,0.2)] transform scale-95 transition-all duration-300" id="modalContent">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="cpu" class="w-5 h-5 text-cyber-primary"></i>
+                    <h3 class="font-display font-bold text-sm text-white">EXPERIMENTAL DOCUMENTATION</h3>
+                </div>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="text-xs text-gray-300 space-y-3 font-sans leading-relaxed">
+                <p>Welcome to <strong class="text-cyber-primary">NUROX-X</strong>, a single-file interactive web experiment designed to demonstrate the power of pure HTML5 Canvas, Web Audio API synthesis, and Tailwind CSS glassmorphism UI.</p>
+                
+                <div class="p-3 bg-gray-900/80 rounded-lg font-mono text-[11px] border border-gray-800 text-gray-400 space-y-1">
+                    <p class="text-cyber-gold">// TECH STACK SPECIFICATION:</p>
+                    <p>• Zero external dependencies (Pure Vanilla JS)</p>
+                    <p>• Math vector particle physics simulation</p>
+                    <p>• Web Audio API dual-oscillator drone generator</p>
+                    <p>• High-performance 60FPS requestAnimationFrame</p>
+                </div>
+
+                <p>You can deploy this file instantly to <span class="text-emerald-400 font-mono">GitHub Pages</span> by naming it <code class="bg-gray-800 px-1.5 py-0.5 rounded text-cyber-primary">index.html</code>.</p>
+            </div>
+
+            <div class="mt-6 pt-3 border-t border-gray-800 flex justify-end">
+                <button id="confirmModalBtn" class="px-4 py-2 rounded-lg bg-cyber-primary text-black font-display font-bold text-xs hover:bg-cyan-300">
+                    ACKNOWLEDGE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Canvas & Physics Configuration
+        const canvas = document.getElementById('cyberCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let numParticles = 120;
+        let maxDistance = 140;
+        let speedMultiplier = 1.5;
+        let particleMode = 'attract'; // 'attract' or 'repel'
+        let currentTheme = 'cyber';
+
+        // Color Themes Palette
+        const themes = {
+            cyber: { primary: '#00f0ff', secondary: '#7000ff', lineRgb: '0, 240, 255' },
+            void: { primary: '#a855f7', secondary: '#ec4899', lineRgb: '168, 85, 247' },
+            gold: { primary: '#f59e0b', secondary: '#ef4444', lineRgb: '245, 158, 11' },
+            matrix: { primary: '#10b981', secondary: '#064e3b', lineRgb: '16, 185, 129' }
+        };
+
+        // Mouse Position
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 180
+        };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Mouse & Touch Listeners
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                mouse.x = e.touches[0].clientX;
+                mouse.y = e.touches[0].clientY;
+            }
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * speedMultiplier;
+                this.vy = (Math.random() - 0.5) * speedMultiplier;
+                this.size = Math.random() * 2 + 1;
+                this.baseSize = this.size;
+            }
+
+            update() {
+                // Border Bounce
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                this.x += this.vx * speedMultiplier;
+                this.y += this.vy * speedMultiplier;
+
+                // Mouse Force Interaction
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < mouse.radius) {
+                        let force = (mouse.radius - dist) / mouse.radius;
+                        let angle = Math.atan2(dy, dx);
+                        
+                        if (particleMode === 'attract') {
+                            this.x += Math.cos(angle) * force * 3;
+                            this.y += Math.sin(angle) * force * 3;
+                        } else {
+                            this.x -= Math.cos(angle) * force * 5;
+                            this.y -= Math.sin(angle) * force * 5;
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = themes[currentTheme].primary;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = themes[currentTheme].primary;
+                ctx.fill();
+                ctx.shadowBlur = 0; // reset
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
+            }
+            logTerminal(`Re-initialized particle grid: ${numParticles} nodes active.`);
+        }
+        initParticles();
+
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let activeSynapses = 0;
+
+        function animate(currentTime) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // FPS Calculation
+            frameCount++;
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fpsCounter').innerText = frameCount.toFixed(1);
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            activeSynapses = 0;
+
+            // Draw Lines & Connections
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x;
+                    let dy = particles[i].y - particles[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < maxDistance) {
+                        activeSynapses++;
+                        let opacity = 1 - (dist / maxDistance);
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(${themes[currentTheme].lineRgb}, ${opacity * 0.4})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            document.getElementById('synapseCounter').innerText = activeSynapses;
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+        let audioCtx = null;
+        let osc1 = null;
+        let osc2 = null;
+        let gainNode = null;
+        let isAudioPlaying = false;
+        let currentFreq = 432;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleAudioDrone() {
+            initAudio();
+
+            if (isAudioPlaying) {
+                // Stop audio
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+                setTimeout(() => {
+                    if (osc1) osc1.stop();
+                    if (osc2) osc2.stop();
+                }, 500);
+                isAudioPlaying = false;
+                document.getElementById('audioStatusText').innerText = "AUDIO DRONE: OFF";
+                document.getElementById('audioIcon').setAttribute('data-lucide', 'volume-x');
+                logTerminal("Audio drone oscillator halted.");
+            } else {
+                // Start ambient drone
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                osc1 = audioCtx.createOscillator();
+                osc2 = audioCtx.createOscillator();
+                gainNode = audioCtx.createGain();
+
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
+
+                osc1.frequency.setValueAtTime(currentFreq, audioCtx.currentTime);
+                osc2.frequency.setValueAtTime(currentFreq / 2, audioCtx.currentTime); // Sub octave
+
+                gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 1);
+
+                osc1.connect(gainNode);
+                osc2.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+
+                isAudioPlaying = true;
+                document.getElementById('audioStatusText').innerText = "AUDIO DRONE: ON";
+                document.getElementById('audioIcon').setAttribute('data-lucide', 'volume-2');
+                logTerminal(`Audio drone synthesized at ${currentFreq} Hz.`);
+            }
+            lucide.createIcons();
+        }
+
+        // Play subtle click sound effect
+        function playSfx(freq = 600, duration = 0.05) {
+            try {
+                if (!audioCtx) initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                let sfxOsc = audioCtx.createOscillator();
+                let sfxGain = audioCtx.createGain();
+
+                sfxOsc.type = 'sine';
+                sfxOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                sfxGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                sfxGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                sfxOsc.connect(sfxGain);
+                sfxGain.connect(audioCtx.destination);
+
+                sfxOsc.start();
+                sfxOsc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        // Sliders Listeners
+        document.getElementById('densitySlider').addEventListener('input', (e) => {
+            numParticles = parseInt(e.target.value);
+            document.getElementById('densityVal').innerText = numParticles;
+            initParticles();
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speedMultiplier = parseFloat(e.target.value);
+            document.getElementById('speedVal').innerText = speedMultiplier.toFixed(1) + 'x';
+        });
+
+        document.getElementById('distanceSlider').addEventListener('input', (e) => {
+            maxDistance = parseInt(e.target.value);
+            document.getElementById('distanceVal').innerText = maxDistance + 'px';
+        });
+
+        // Theme Switcher Buttons
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                playSfx(800);
+                currentTheme = e.target.getAttribute('data-theme');
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('border-cyber-primary', 'font-bold'));
+                logTerminal(`Spectrum color theme set to: ${currentTheme.toUpperCase()}`);
+            });
+        });
+
+        // Audio Drone Button
+        document.getElementById('audioToggleBtn').addEventListener('click', () => {
+            toggleAudioDrone();
+        });
+
+        // Frequency Selector Buttons
+        document.querySelectorAll('.freq-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                playSfx(1000);
+                currentFreq = parseInt(e.target.getAttribute('data-freq'));
+                document.getElementById('freqVal').innerText = `${currentFreq}Hz`;
+                
+                if (isAudioPlaying && osc1 && osc2) {
+                    osc1.frequency.exponentialRampToValueAtTime(currentFreq, audioCtx.currentTime + 0.2);
+                    osc2.frequency.exponentialRampToValueAtTime(currentFreq / 2, audioCtx.currentTime + 0.2);
+                }
+                logTerminal(`Frequency modified to ${currentFreq} Hz`);
+            });
+        });
+
+        // Physics Mode Toggle
+        const attractBtn = document.getElementById('attractModeBtn');
+        const repelBtn = document.getElementById('repelModeBtn');
+
+        attractBtn.addEventListener('click', () => {
+            playSfx(700);
+            particleMode = 'attract';
+            attractBtn.className = "flex-1 py-2 rounded-lg bg-cyber-primary/20 border border-cyber-primary/50 text-[10px] font-mono text-cyber-primary font-bold transition-all";
+            repelBtn.className = "flex-1 py-2 rounded-lg bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-400 hover:border-cyber-pink hover:text-cyber-pink transition-all";
+            logTerminal("Force field set to ATTRACT.");
+        });
+
+        repelBtn.addEventListener('click', () => {
+            playSfx(900);
+            particleMode = 'repel';
+            repelBtn.className = "flex-1 py-2 rounded-lg bg-cyber-pink/20 border border-cyber-pink/50 text-[10px] font-mono text-cyber-pink font-bold transition-all";
+            attractBtn.className = "flex-1 py-2 rounded-lg bg-gray-900 border border-gray-800 text-[10px] font-mono text-gray-400 hover:border-cyber-primary hover:text-cyber-primary transition-all";
+            logTerminal("Force field set to REPEL.");
+        });
+
+        // Burst Matrix Button
+        document.getElementById('resetCanvasBtn').addEventListener('click', () => {
+            playSfx(1200, 0.1);
+            particles.forEach(p => {
+                p.vx = (Math.random() - 0.5) * 8;
+                p.vy = (Math.random() - 0.5) * 8;
+            });
+            logTerminal("QUANTUM PULSE BURST DISPATCHED!");
+        });
+
+        document.getElementById('pulseEffectBtn').addEventListener('click', () => {
+            document.getElementById('resetCanvasBtn').click();
+        });
+
+        // Terminal Log Helper
+        function logTerminal(msg) {
+            const terminal = document.getElementById('terminalLog');
+            const p = document.createElement('p');
+            p.className = 'text-gray-300';
+            p.innerText = `[${new Date().toLocaleTimeString()}]: ${msg}`;
+            terminal.appendChild(p);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        document.getElementById('clearLogsBtn').addEventListener('click', () => {
+            document.getElementById('terminalLog').innerHTML = '';
+        });
+
+        const modal = document.getElementById('labModal');
+        const triggerBtn = document.getElementById('triggerModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const confirmBtn = document.getElementById('confirmModalBtn');
+
+        function openModal() {
+            playSfx(500);
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            logTerminal("Experimental Documentation Modal opened.");
+        }
+
+        function closeModal() {
+            playSfx(400);
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        triggerBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        confirmBtn.addEventListener('click', closeModal);
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+    </script>
+</body>
+</html>
